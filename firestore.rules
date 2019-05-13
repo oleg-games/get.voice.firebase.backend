@@ -1,0 +1,74 @@
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.auth.uid != null;
+    }
+    // match /codes/{code} {
+    //   allow read, write: if request.auth.uid != null;
+    // }
+
+//     	//     	// A read rule can be divided into get and list rules
+//       match /cities/{city} {
+//         // Applies to single document read requests
+//         allow get: if <condition>;
+
+//         // Applies to queries and collection read requests
+//         allow list: if <condition>;
+//       }
+
+//       // A write rule can be divided into create, update, and delete rules
+//       match /cities/{city} {
+//         // Applies to writes to nonexistent documents
+//         allow create: if <condition>;
+
+//         // Applies to writes to existing documents
+//         allow update: if <condition>;
+
+//         // Applies to delete operations
+//         allow delete: if <condition>;
+//       }
+//     }
+
+    function isUser (auth, userKey) {
+      return auth.uid == userKey;
+    }
+
+    function isAdmin (auth) {
+      return root.child('users').child(auth.uid).child('isAdmin').val() == true;
+    }
+    
+    // // Match any document in the 'questions' collection
+    // match /questions/{question} {
+    //   allow read: if <condition>;
+    //   allow write: if <condition>;
+    // }
+    // 
+		// A read rule can be divided into get and list rules
+//     match /cities/{city} {
+//       // Applies to single document read requests
+//       allow get: if <condition>;
+
+//       // Applies to queries and collection read requests
+//       allow list: if <condition>;
+//     }
+
+    // A write rule can be divided into create, update, and delete rules
+    match /questions/{question} {
+      // Applies to writes to nonexistent documents
+      allow create: if request.resource.data.fromPhone != null 
+      	&& request.resource.data.text != null;
+      // allow create: if resource.data.fromPhone != null && resource.data.text != null;
+
+//       // Applies to writes to existing documents
+//       allow update: if <condition>;
+
+      // Applies to delete operations
+      // allow delete: if <condition>;
+    }
+    // Allow the user to access documents in the "cities" collection
+    // only if they are authenticated.
+    // match /cities/{city} {
+    //   allow read, write: if request.auth.uid != null;
+    // }
+	}
+}
