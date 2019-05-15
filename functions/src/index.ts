@@ -1,44 +1,14 @@
 import * as functions from 'firebase-functions';
 // import * as twilio from 'twilio';
 import * as crypto from 'crypto';
-// const express = require('express');
-// const app = express();
-
 // // The Firebase Admin SDK to access the Firebase Realtime Database.
-import * as admin from 'firebase-admin';
-admin.initializeApp();
-
-// app.get('/', (req, res) => {
-//     const date = new Date();
-//     const hours = (date.getHours() % 12) + 1;  // London is UTC + 1hr;
-//     res.send(`
-//       <!doctype html>
-//       <head>
-//         <title>Time</title>
-//         <link rel="stylesheet" href="/style.css">
-//         <script src="/script.js"></script>
-//       </head>
-//       <body>
-//         <p>In London, the clock strikes:
-//           <span id="bongs">${'BONG '.repeat(hours)}</span></p>
-//         <button onClick="refresh(this)">Refresh</button>
-//       </body>
-//     </html>`);
-// });
-
-// app.get('/api', (req, res) => {
-//     console.log('test')
-//     const date = new Date();
-//     const hours = (date.getHours() % 12) + 1;  // London is UTC + 1hr;
-//     res.json({ bongs: 'BONG '.repeat(hours) });
-// });
-
-// exports.app = functions.https.onRequest(app);
-
+import { Questions, Codes, Auth, Answers } from './services';
+// import * as admin from 'firebase-admin';
+// admin.initializeApp();
 // // Start writing Firebase Functions
 // // https://firebase.google.com/docs/functions/typescript
 //
-export const helloWorld = functions.https.onRequest((request, response) => {
+export const helloWorld = functions.https.onRequest((request: any, response: any) => {
     response.send("Hello from Firebase!");
 });
 
@@ -56,7 +26,7 @@ function getToken() {
     return crypto.randomBytes(64).toString('hex');
 }
 
-export const getCode = functions.https.onRequest(async (request, response) => {
+export const getCode = functions.https.onRequest(async (request: any, response: any) => {
     console.log('verifyPhone');
     console.log('requestBody', request.body);
     if (request.body.phone) {
@@ -78,7 +48,7 @@ export const getCode = functions.https.onRequest(async (request, response) => {
             console.log('phoneCode', phoneCode);
             console.log('phoneNumber', phoneNumber);
             try {
-                await admin.firestore().collection("codes").add({ phone: phoneNumber, code: phoneCode, isSignIn: false, token: '' });
+                await Codes.add({ phone: phoneNumber, code: phoneCode, isSignIn: false, token: '' });
                 response.send(`SMS sended on phone number: ${phoneNumber}`);
             } catch (err) {
                 console.log(err);
@@ -92,7 +62,7 @@ export const getCode = functions.https.onRequest(async (request, response) => {
     }
 });
 
-export const verifyPhone = functions.https.onRequest(async (request, response) => {
+export const verifyPhone = functions.https.onRequest(async (request: any, response: any) => {
     console.log('verifyPhone');
     console.log('requestBody', request.body);
     if (request.body.code && request.body.phone) {
@@ -101,18 +71,15 @@ export const verifyPhone = functions.https.onRequest(async (request, response) =
         const code = request.body.code
         const phone = request.body.phone
         console.log(phone, code, false)
-        const codeDocs = await admin.firestore().collection("codes")
-            .where("phone", "==", phone)
-            .where("code", "==", code)
-            .where("isSignIn", "==", false)
-            .get()
-
+        const codeDocs: any = await Codes.getCodeByPhoneByCodeNotSighIn(phone, code)
+        console.log(codeDocs.docs)
+        console.log(codeDocs.docs.length)
         if (codeDocs.docs.length) {
             const token = getToken().trim();
             console.log('id', codeDocs.docs[0].id);
 
             try {
-                await admin.firestore().collection("codes").doc(codeDocs.docs[0].id).update({
+                await Codes.update(codeDocs.docs[0].id, {
                     isSignIn: true,
                     token,
                 });
@@ -131,42 +98,43 @@ export const verifyPhone = functions.https.onRequest(async (request, response) =
     response.status(200).send(`Hello from Firebase! Code: ${request.body.code}. Phone: ${request.body.phone}`);
 });
 
-// const middleware = async function (req, res, next) {
+const middleware = async function (req: any, res: any) {
 
-//     const token = req.headers.token;
+    const token = req.headers.token;
 
-//     if (!token) {
-//         throw new Error('Wrong credentials');
-//     }
-//     try {
-//         const decodedIdToken = await admin.auth()
-//             .verifyIdToken(token)
-//         // admin.auth().getUser(decodedIdToken.uid);
-//     } catch (err) {
-//         throw new Error('Wrong credentials');
-//     }
+    if (!token) {
+        throw new Error('Wrong credentials');
+    }
+    try {
+        await Auth.getAuth().verifyIdToken(token);
+        // admin.auth().getUser(decodedIdToken.uid);
+    } catch (err) {
+        console.log('err', err)
+        return false;
+        // throw new Error('Wrong credentials');
+    }
 
-//     addAnswers(req, res, next);
-// };
+    return true;
+    // addAnswers(req, res, next);
+};
 
 
 // Take the text parameter passed to this HTTP endpoint and insert it into the
 // Realtime Database under the path /messages/:pushId/original
-export const addQuestion = functions.https.onRequest(async (req, res) => {
+export const addQuestion = functions.https.onRequest(async (req: any, res: any) => {
     // Grab the text parameter.
     const phone = req.body.phone;
+    const text = req.body.text;
+    const url = req.body.url;
+    const isAuth = await middleware(req, res);
 
-    // admin.auth()
-    //     .verifyIdToken(accessToken)
-    //     .then(decodedIdToken => {
-    //         return firebaseAdmin.auth().getUser(decodedIdToken.uid);
-    //     })
-    //     .then(user => {
-    //         // Do whatever you want with the user.
-    //     });
+    if (!isAuth) {
+        res.send('Wrong credentials')
+    }
 
-    // // const { id } = await Questions.addQuestion(this.state.phoneNumber, this.state.questionText, url);
+    const { id } = await Questions.addQuestion(phone, text, url);
     console.log(phone)
+    res.send('Id' + id);
     // Push the new message into the Realtime Database using the Firebase Admin SDK.
     // const snapshot = await admin.firestore..ref('/questions').push({ phone });
     // Redirect with 303 SEE OTHER to the URL of the pushed object in the Firebase console.
@@ -176,7 +144,7 @@ export const addQuestion = functions.https.onRequest(async (req, res) => {
     // res.send(`Okay ${questionRef.id}`);
 });
 
-export const addAnswers = functions.https.onRequest(async (req, res) => {
+export const addAnswers = functions.https.onRequest(async (req: any, res: any) => {
     const questionId = req.body.questionId;
     const contacts = req.body.contacts;
     let validContacts = 0;
@@ -188,7 +156,8 @@ export const addAnswers = functions.https.onRequest(async (req, res) => {
             validContacts++;
             const data = {
                 toPhone: contact,
-                questionRef: await admin.firestore().doc('questions/' + questionId),
+                questionRef: await Questions.getQuestion(questionId),
+                // questionRef: await admin.firestore().doc('questions/' + questionId),
                 text: '',
                 image: '',
                 // name: 'productName',
@@ -198,7 +167,7 @@ export const addAnswers = functions.https.onRequest(async (req, res) => {
             // db.collection('products').add(data);
             // await document.collection("answers").add({toPhone: contact})
             // await admin.firestore().collection("answers").add({toPhone: contact, questionId})
-            await admin.firestore().collection("answers").add(data)
+            await Answers.addAnswer(data)
         }
     }
 
@@ -364,7 +333,7 @@ export const addAnswers = functions.https.onRequest(async (req, res) => {
 
 export const createQuestion = functions.firestore
     .document('questions/{questionId}')
-    .onCreate((snap, context) => {
+    .onCreate((snap: any, context: any) => {
         // Get an object representing the document
         // e.g. {'name': 'Marie', 'age': 66}
         const newValue: any = snap.data();
@@ -404,3 +373,60 @@ export const createQuestion = functions.firestore
 
 //         // perform desired operations ...
 //     });
+
+
+// const express = require('express');
+// const app = express();
+// const cors = require('cors')({origin: true});
+// app.use(cors);
+
+// Automatically allow cross-origin requests
+// app.use(cors({ origin: true }));
+
+// Add middleware to authenticate requests
+// app.use(myMiddleware);
+
+// build multiple CRUD interfaces:
+// app.get('/:id', (req: any, res: any) => res.send('get'));
+// app.post('/', (req: any, res: any) => res.send('post'));
+// app.put('/:id', (req: any, res: any) => res.send('put'));
+// app.delete('/:id', (req: any, res: any) => res.send('delete'));
+// app.get('/', (req: any, res: any) => res.send('Widgets.list()'));
+// app.get('/:id', (req: any, res: any) => res.send(Widgets.getById(req.params.id)));
+// app.post('/', (req: any, res: any) => res.send(Widgets.create()));
+// app.put('/:id', (req: any, res: any) => res.send(Widgets.update(req.params.id, req.body)));
+// app.delete('/:id', (req: any, res: any) => res.send(Widgets.delete(req.params.id)));
+// app.get('/', (req: any, res: any) => res.send(Widgets.list()));
+
+// Expose Express API as a single Cloud Function:
+// exports.widgets = functions.https.onRequest(app);
+
+
+
+// app.get('/', (req: any, res: any) => {
+//     console.log('test');
+//     const date = new Date();
+//     const hours = (date.getHours() % 12) + 1;  // London is UTC + 1hr;
+//     res.send(`
+//       <!doctype html>
+//       <head>
+//         <title>Time</title>
+//         <link rel="stylesheet" href="/style.css">
+//         <script src="/script.js"></script>
+//       </head>
+//       <body>
+//         <p>In London, the clock strikes:
+//           <span id="bongs">${'BONG '.repeat(hours)}</span></p>
+//         <button onClick="refresh(this)">Refresh</button>
+//       </body>
+//     </html>`);
+// });
+
+// app.get('/api', (req: any, res: any) => {
+//     console.log('test')
+//     const date = new Date();
+//     const hours = (date.getHours() % 12) + 1;  // London is UTC + 1hr;
+//     res.json({ bongs: 'BONG '.repeat(hours) });
+// });
+
+// exports.app = functions.https.onRequest(app);

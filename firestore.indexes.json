@@ -1,4 +1,47 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "answers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "questionId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "text",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "answers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "questionRef",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "text",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "answers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "toPhone",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "text",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }
