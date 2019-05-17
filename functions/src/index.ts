@@ -2,7 +2,10 @@ import * as functions from 'firebase-functions';
 // import * as twilio from 'twilio';
 import * as crypto from 'crypto';
 // // The Firebase Admin SDK to access the Firebase Realtime Database.
-import { Questions, Codes, Auth, Answers } from './services';
+// import { Questions, Codes, Answers } from './services';
+import routes from './routes';
+// import { Middleware } from './middleware';
+import { Questions, Codes, Answers } from './services';
 // import * as admin from 'firebase-admin';
 // admin.initializeApp();
 // // Start writing Firebase Functions
@@ -98,51 +101,56 @@ export const verifyPhone = functions.https.onRequest(async (request: any, respon
     response.status(200).send(`Hello from Firebase! Code: ${request.body.code}. Phone: ${request.body.phone}`);
 });
 
-const middleware = async function (req: any, res: any) {
-
-    const token = req.headers.token;
-
-    if (!token) {
-        throw new Error('Wrong credentials');
-    }
-    try {
-        await Auth.getAuth().verifyIdToken(token);
-        // admin.auth().getUser(decodedIdToken.uid);
-    } catch (err) {
-        console.log('err', err)
-        return false;
-        // throw new Error('Wrong credentials');
-    }
-
-    return true;
-    // addAnswers(req, res, next);
-};
-
-
 // Take the text parameter passed to this HTTP endpoint and insert it into the
 // Realtime Database under the path /messages/:pushId/original
-export const addQuestion = functions.https.onRequest(async (req: any, res: any) => {
-    // Grab the text parameter.
-    const phone = req.body.phone;
-    const text = req.body.text;
-    const url = req.body.url;
-    const isAuth = await middleware(req, res);
+// export const question = functions.https.onRequest(async (req: any, res: any) => {
+//     try {
+//         await Middleware.middlewareInFirebase(req, res);
+//     } catch (err) {
+//         console.log('Wrong credentials 401', err)
+//         res.status(401).send('Wrong credentials')
+//     }
 
-    if (!isAuth) {
-        res.send('Wrong credentials')
-    }
+//     switch (req.method) {
+//         case 'GET':
+//             await QuestionsHandler.get(req, res);
+//             break;
+//         case 'PUT':
+//             await QuestionsHandler.put(req, res);
+//             break;
+//         default:
+//             res.status(405).send({ error: 'Something blew up!' });
+//             break;
+//     }
+// });
 
-    const { id } = await Questions.addQuestion(phone, text, url);
-    console.log(phone)
-    res.send('Id' + id);
-    // Push the new message into the Realtime Database using the Firebase Admin SDK.
-    // const snapshot = await admin.firestore..ref('/questions').push({ phone });
-    // Redirect with 303 SEE OTHER to the URL of the pushed object in the Firebase console.
-    // res.redirect(303, snapshot.ref.toString());
-    // Add a new document with a generated id.
-    // const questionRef = await admin.firestore().collection("questions").add({ phone })
-    // res.send(`Okay ${questionRef.id}`);
-});
+
+// const express = require('express');
+// const app = express();
+// const cors = require('cors')({origin: true});
+// app.use(cors);
+
+// Automatically allow cross-origin requests
+// app.use(cors({ origin: true }));
+
+// Add middleware to authenticate requests
+// app.use(myMiddleware);
+
+// build multiple CRUD interfaces:
+// app.get('/:id', (req: any, res: any) => res.send('get'));
+// app.post('/', (req: any, res: any) => res.send('post'));
+// app.put('/:id', (req: any, res: any) => res.send('put'));
+// app.delete('/:id', (req: any, res: any) => res.send('delete'));
+// app.get('/', (req: any, res: any) => res.send('Widgets.list()'));
+// app.get('/:id', (req: any, res: any) => res.send(Widgets.getById(req.params.id)));
+// app.post('/', (req: any, res: any) => res.send(Widgets.create()));
+// app.put('/:id', (req: any, res: any) => res.send(Widgets.update(req.params.id, req.body)));
+// app.delete('/:id', (req: any, res: any) => res.send(Widgets.delete(req.params.id)));
+// app.get('/', (req: any, res: any) => res.send(Widgets.list()));
+
+// Expose Express API as a single Cloud Function:
+// export const questions = functions.https.onRequest(app);
+export const api = functions.https.onRequest(routes);
 
 export const addAnswers = functions.https.onRequest(async (req: any, res: any) => {
     const questionId = req.body.questionId;
@@ -331,20 +339,20 @@ export const addAnswers = functions.https.onRequest(async (req: any, res: any) =
 //     res.send(`${validContacts} answers created`);
 // });
 
-export const createQuestion = functions.firestore
-    .document('questions/{questionId}')
-    .onCreate((snap: any, context: any) => {
-        // Get an object representing the document
-        // e.g. {'name': 'Marie', 'age': 66}
-        const newValue: any = snap.data();
+// export const createQuestion = functions.firestore
+//     .document('questions/{questionId}')
+//     .onCreate((snap: any, context: any) => {
+//         // Get an object representing the document
+//         // e.g. {'name': 'Marie', 'age': 66}
+//         const newValue: any = snap.data();
 
-        // access a particular field as you would any JS property
-        const fromPhone = newValue.fromPhone;
-        console.log('newValue', newValue)
-        console.log('questionId', fromPhone)
-        return snap.ref.parent;
-        // perform desired operations ...
-    });
+//         // access a particular field as you would any JS property
+//         const fromPhone = newValue.fromPhone;
+//         console.log('newValue', newValue)
+//         console.log('questionId', fromPhone)
+//         return snap.ref.parent;
+//         // perform desired operations ...
+//     });
 // export const createUser = functions.firestore
 //     .document('users/{userId}')
 //     .onCreate((snap, context) => {
@@ -375,31 +383,6 @@ export const createQuestion = functions.firestore
 //     });
 
 
-// const express = require('express');
-// const app = express();
-// const cors = require('cors')({origin: true});
-// app.use(cors);
-
-// Automatically allow cross-origin requests
-// app.use(cors({ origin: true }));
-
-// Add middleware to authenticate requests
-// app.use(myMiddleware);
-
-// build multiple CRUD interfaces:
-// app.get('/:id', (req: any, res: any) => res.send('get'));
-// app.post('/', (req: any, res: any) => res.send('post'));
-// app.put('/:id', (req: any, res: any) => res.send('put'));
-// app.delete('/:id', (req: any, res: any) => res.send('delete'));
-// app.get('/', (req: any, res: any) => res.send('Widgets.list()'));
-// app.get('/:id', (req: any, res: any) => res.send(Widgets.getById(req.params.id)));
-// app.post('/', (req: any, res: any) => res.send(Widgets.create()));
-// app.put('/:id', (req: any, res: any) => res.send(Widgets.update(req.params.id, req.body)));
-// app.delete('/:id', (req: any, res: any) => res.send(Widgets.delete(req.params.id)));
-// app.get('/', (req: any, res: any) => res.send(Widgets.list()));
-
-// Expose Express API as a single Cloud Function:
-// exports.widgets = functions.https.onRequest(app);
 
 
 

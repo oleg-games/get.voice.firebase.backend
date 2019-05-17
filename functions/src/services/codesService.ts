@@ -1,4 +1,5 @@
 import Firestore from './firestoreService';
+import Auth from './authService';
 
 /**
  * @class Users
@@ -32,28 +33,52 @@ export default class Codes {
             .get()
     }
 
-    // /**
-    //  * Get user by phone
-    //  * @param {string} phone
-    //  * @returns {firebase.Promise<any>|!firebase.Promise.<void>}
-    //  */
-    // static async getCodeByPhoneByCodeNotSighIn(phone: string, code: string, ) {
-    //     const res = await this.getCodesCol()
-    //         .where("phone", "==", phone)
-    //         .where("code", "==", code)
-    //         .where("isSignIn", "==", false)
-    //         .get()
+    /**
+     * Get code by token and signIn
+     * @param {string} token
+     * @returns {firebase.Promise<any>|!firebase.Promise.<void>}
+     */
+    static async getCodeByTokenSighIn(token: string) {
+        console.log('getCodeByTokenSighIn token', token)
+        return await this.getCodesCol()
+            .where("token", "==", token)
+            .where("isSignIn", "==", true)
+            .get()
+    }
 
-    //     if (res.docs && res.docs.length) {
-    //         if (res.docs.length === 1) {
-    //             return ({ ...res.docs[0].data(), id: res.docs[0].id });
-    //         } else {
-    //             throw new Error(`More then one user with phone ${phone}`);
-    //         }
-    //     }
 
-    //     return null;
-    // }
+    static async getPhoneByToken(token: string) {
+        console.log('token', token)
+        if (!token || token.indexOf('Bearer ') !== 0) {
+            throw new Error('Wrong credentials')
+        }
+
+        const result = await Codes.getCodeByTokenSighIn(token.substring('Bearer '.length));
+        console.log('number of codes', result.docs.length)
+        if (result.docs.length) {
+            console.log('user', result.docs[0].data());
+            const code = { ...result.docs[0].data(), id: result.docs[0].id } as any;
+            console.log('code', code);
+            return code.phone;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get phone by token
+     *
+     * @param {string} token token
+     */
+    static getPhoneByTokenFirebase = async (token: string) => {
+        console.log('token', token)
+        if (!token || token.indexOf('Bearer ') !== 0) {
+            throw new Error('Wrong credentials')
+        }
+
+        const decodedToken = await Auth.getAuth().verifyIdToken(token.substring('Bearer '.length));
+        return decodedToken && decodedToken.phone_number && decodedToken.phone_number.substring(1);
+    }
 
     /**
      * Update code by id
