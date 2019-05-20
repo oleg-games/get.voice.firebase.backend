@@ -8,7 +8,7 @@ export default class Firestore {
     /**
      * Get current Database
      */
-    static getFirestore() {
+    static get() {
         return Firebase.getFirestore();
     }
 };

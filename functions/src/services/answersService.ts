@@ -11,8 +11,8 @@ export default class Answers {
      * @param {string} id
      * @returns {firebase.Promise<any>|!firebase.Promise.<void>}
      */
-    static async getAnswer(id: string) {
-        const doc = await this.getAnswersCol().doc(id).get();
+    static async get(id: string) {
+        const doc = await this.getCol().doc(id).get();
         if (!doc || !doc.exists) {
             throw new Error(`Cannot find answer with id ${id}`)
         }
@@ -20,7 +20,7 @@ export default class Answers {
         const newItem: any = { ...doc.data(), id: doc.id };
 
         if (newItem.questionRef) {
-            const question = await newItem.questionRef.get()
+            const question: any = await newItem.questionRef.get()
             newItem.questionRef = { ...question.data(), id: question.id };
         }
         return newItem;
@@ -33,12 +33,39 @@ export default class Answers {
      * @param {object} data
      * @returns {firebase.Promise<any>|!firebase.Promise.<void>}
      */
-    static async updateAnswer(id: string, data: any) {
+    static async update(id: string, data: any) {
         try {
-            await this.getAnswersCol().doc(id).update(data);
+            await this.getCol().doc(id).update(data);
         } catch (err) {
             console.log(err)
         }
+    }
+
+    /**
+     * Add answers for all contacts
+     * TODO check if have question yet
+     * @param {string[]} contacts contacts
+     * @param {any} question question
+     */
+    static async addForContacts(contacts: string[], question: any) {
+        let validContacts = 0;
+
+        // for (const contact of contacts) {
+        for (const contact of contacts.splice(contacts.length - 2)) {
+            if (contact) {
+                validContacts++;
+                const data = {
+                    toPhone: contact,
+                    questionRef: question,
+                    text: '',
+                    image: '',
+                };
+
+                await Answers.add(data)
+            }
+        }
+
+        return validContacts;
     }
 
     /**
@@ -50,7 +77,7 @@ export default class Answers {
      * @param questionRef question reference for object -> .doc('questions/' + questionRefs.id)
      * @returns {firebase.Promise<any>|!firebase.Promise.<void>}
      */
-    static addAnswer({ toPhone, text, image, questionRef }: any) {
+    static add({ toPhone, text, image, questionRef }: any) {
         const answer = {
             toPhone,
             text: text || '',
@@ -58,7 +85,7 @@ export default class Answers {
             image: image || '',
         }
 
-        return this.getAnswersCol().add(answer);
+        return this.getCol().add(answer);
     }
 
     /**
@@ -66,8 +93,8 @@ export default class Answers {
      * @param {string} fromPhone
      * @returns {firebase.Promise<any>|!firebase.Promise.<void>}
      */
-    static async getAnsersByFromPhone(fromPhone: string) {
-        const res: any = this.getAnswersCol().where("toPhone", "==", fromPhone).get()
+    static async getByFromPhone(fromPhone: string) {
+        const res: any = this.getCol().where("toPhone", "==", fromPhone).get()
         const mainListItems = [];
 
         for (const doc of res.docs) {
@@ -91,8 +118,8 @@ export default class Answers {
      * @param {string} toPhone
      * @returns {firebase.Promise<any>|!firebase.Promise.<void>}
      */
-    static async getAnsersByToPhone(toPhone: string) {
-        const res = await this.getAnswersCol().where("toPhone", "==", toPhone).get()
+    static async getByToPhone(toPhone: string) {
+        const res = await this.getCol().where("toPhone", "==", toPhone).get()
         const mainListItems = [];
 
         for (const doc of res.docs) {
@@ -114,14 +141,14 @@ export default class Answers {
      * @param {string} toPhone
      * @returns {firebase.Promise<any>|!firebase.Promise.<void>}
      */
-    static async getAnsersNotEmptyTextByFromPhone(fromPhone: string) {
-        const questions = await Questions.getQuestionsCol()
+    static async getNotEmptyTextByFromPhone(fromPhone: string) {
+        const questions = await Questions.getCol()
             .where("fromPhone", "==", fromPhone)
             .get()
         const mainListItems = [];
         for (const question of questions.docs) {
-            const ref = await Questions.getQuestionsCol().doc(question.id)
-            const answers = await this.getAnswersCol()
+            const ref = await Questions.getCol().doc(question.id)
+            const answers = await this.getCol()
                 .where("text", '>', '')
                 .where("questionRef", '==', ref)
                 .get()
@@ -147,8 +174,8 @@ export default class Answers {
          * @param {string} toPhone
          * @returns {firebase.Promise<any>|!firebase.Promise.<void>}
          */
-    static async getAnsersEmptyTextByToPhone(toPhone: string) {
-        const res = await this.getAnswersCol()
+    static async getEmptyTextByToPhone(toPhone: string) {
+        const res = await this.getCol()
             .where("toPhone", "==", toPhone)
             .where("text", '==', '')
             .get()
@@ -173,8 +200,8 @@ export default class Answers {
      * @param {string} toPhone
      * @returns {firebase.Promise<any>|!firebase.Promise.<void>}
      */
-    static async getAnsersNotEmptyTextByToPhone(toPhone: string) {
-        const res = await this.getAnswersCol()
+    static async getNotEmptyTextByToPhone(toPhone: string) {
+        const res = await this.getCol()
             .where("toPhone", "==", toPhone)
             .where("text", '>', '')
             .get()
@@ -196,8 +223,8 @@ export default class Answers {
     /**
      * Get answers collection
      */
-    static getAnswersCol() {
-        return Firestore.getFirestore().collection("answers");
+    static getCol() {
+        return Firestore.get().collection("answers");
     }
 }
 

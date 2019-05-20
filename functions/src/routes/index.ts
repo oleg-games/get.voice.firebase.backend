@@ -10,7 +10,7 @@ app.use(cors);
 // app.use(cors({ origin: true }));
 // const keystone = require('@eklogvinov/keystone')
 
-import { QuestionsRouter } from './lib';
+import { QuestionsRouter, AnswersRouter, CodesRouter, HelperRouter, UsersRouter, errorHandler } from './lib';
 // const middlewareRouter = require('./lib/middleware')
 // const userRouter = require('./others/user')
 // const shopRouter = require('./shop/shop')
@@ -24,13 +24,15 @@ import { QuestionsRouter } from './lib';
 app.options('/v1/*', (req: any, res: any) => {
     res.sendStatus(200)
 })
-app.get('/:id', (req: any, res: any) => res.send('get'));
 app.use('/v1/questions', QuestionsRouter)
-    // app.use(middlewareRouter.errorHandler)
+app.use('/v1/answers', AnswersRouter)
+app.use('/v1/security', CodesRouter)
+app.use('/v1/users', UsersRouter)
+app.use('/v1/helper', HelperRouter)
+app.use(errorHandler)
 
 
 export default app;
-// export const questions = functions.https.onRequest(app);
 
 // export default function (app: any) {
 //     // app.all('/api/v1/*', keystone.middleware.cors)

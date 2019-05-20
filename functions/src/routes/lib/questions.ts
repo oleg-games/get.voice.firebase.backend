@@ -1,142 +1,54 @@
-// const _ = require('lodash')
 const express = require('express')
-// const keystone = require('@eklogvinov/keystone')
-// const utils = requireRoot('lib/utils')
-// const {
-//     shopService,
-//     basketService,
-//     securityService
-// } = requireRoot('lib/services')
-
-// const {
-//     authenticate
-// } = require('../lib/middleware')
+import { Questions, Answers } from '../../services';
 import { WebError } from '../../errors';
+import { authenticate } from './middleware';
 
 const router = express.Router()
 
-// function resBody(member) {
-//     return {
-//         data: member || {},
-//         status: 'success'
-//     }
-// }
+router.get('/:id', authenticate(), async (req: any, res: any) => {
+    try {
+        const { id } = req.params;
 
-router.get('/',
-    // authenticate({
-    //     kjs: {
-    //         'Basket': 'manage',
-    //         'Product': 'view',
-    //     },
-    // }),
-    async (req: any, res: any) => {
-        try {
-            //     const { page, size, identifier, updatedAt, friendIds } = req.query
-            //     const baskets = await basketService.getBaskets({ page, size, token: req.headers.authorization })
-            res.status(200).send('baskets')
-        } catch (e) {
-            if (e instanceof WebError) {
-                console.log(e)
-                res.status(e.status).send(e.message)
-            } else {
-                console.log(e)
-                res.status(500).send(e.message)
-            }
+        if (!id) {
+            throw new WebError('Please fill question id', 500);
         }
-    })
 
-// router.get('/products', authenticate({
-//     kjs: {
-//         'Product': 'manage',
-//     },
-// }),
-//     async (req, res) => {
-//         try {
-//             await shopService.getProducts()
-//                 .then(product => {
-//                     res.send(product)
-//                 })
-//                 .catch(err => {
-//                     throw new WebError(err)
-//                 })
-//         } catch (e) {
-//             if (e instanceof WebError) {
-//                 console.log(e)
-//                 res.status(e.status).send(e.message)
-//             } else {
-//                 console.log(e)
-//                 res.status(500).send(e.message)
-//             }
-//         }
-//     })
+        const questionRef = await Questions.get(id);
 
-// router.get('/products-in-baskets', authenticate({
-//     kjs: {
-//         'Product': 'manage',
-//     },
-// }),
-//     async (req, res) => {
-//         try {
-//             const {
-//                 basket,
-//                 product
-//             } = req.query
+        if (questionRef && questionRef.exists) {
+            res.send({ ...questionRef.data(), id: questionRef.id });
+        } else {
+            res.send({});
+        }
+    } catch (e) {
+        throw new WebError('Problem when get question. Please contact us', 500);
+    }
+})
 
-//             let filters = {
-//                 basket,
-//                 product
-//             }
+router.get('/:phone/all', authenticate(), async (req: any, res: any) => {
+    const { phone } = req.params;
 
-//             filters = _.omit(filters, _.isNil)
-//             console.log(filters)
-//             await shopService.getProductsInBaskets()
-//                 .then(productsInBaskets => {
-//                     res.send(productsInBaskets)
-//                 })
-//                 .catch(err => {
-//                     throw new WebError(err)
-//                 })
-//         } catch (e) {
-//             if (e instanceof WebError) {
-//                 console.log(e)
-//                 res.status(e.status).send(e.message)
-//             } else {
-//                 console.log(e)
-//                 res.status(500).send(e.message)
-//             }
-//         }
-//     })
+    if (!phone) {
+        throw new WebError('Please fill phone', 500);
+    }
 
-// router.get('/products-in-baskets/i/:id', authenticate({
-//     kjs: {
-//         'Product': 'manage',
-//     },
-// }),
-//     async (req, res) => {
-//         try {
-//             const {
-//                 id
-//             } = req.params
+    try {
+        const questionsSnapshot = await Questions.getByPhone(phone);
+        res.send(questionsSnapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
+    } catch (e) {
+        throw new WebError(`Problem when get questions by phone. Phone ${phone}`, 500);
+    }
+})
 
-//             await shopService.findOneProductInBaskets({
-//                 id
-//             })
-//                 .then(productsInBaskets => {
-//                     res.send(productsInBaskets)
-//                 })
-//                 .catch(err => {
-//                     throw new WebError(err)
-//                 })
-//         } catch (e) {
-//             if (e instanceof WebError) {
-//                 console.log(e)
-//                 res.status(e.status).send(e.message)
-//             } else {
-//                 console.log(e)
-//                 res.status(500).send(e.message)
-//             }
-//         }
-//     })
-
+router.post('/', authenticate(), async (req: any, res: any) => {
+    try {
+        const { phone, text, url, contacts }: any = req.body;
+        const questionRef = await Questions.add(phone, text, url);
+        const answers = await Answers.addForContacts(contacts, questionRef)
+        res.status(200).send({ id: questionRef.id, answers });
+    } catch (e) {
+        throw new WebError('Problem when add question. Please contact us', 500);
+    }
+})
 
 export default router;

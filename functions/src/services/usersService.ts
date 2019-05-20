@@ -10,8 +10,8 @@ export default class Users {
      * @param {string} id
      * @returns {firebase.Promise<any>|!firebase.Promise.<void>}
      */
-    static async getUser(id: string) {
-        const doc = await this.getUsersCol().doc(id).get();
+    static async get(id: string) {
+        const doc = await this.getCol().doc(id).get();
         if (!doc || !doc.exists) {
             throw new Error(`Cannot find user with id ${id}`)
         }
@@ -24,8 +24,8 @@ export default class Users {
      * @param {string} phone
      * @returns {firebase.Promise<any>|!firebase.Promise.<void>}
      */
-    static async getUserByPhone(phone: string) {
-        const res = await this.getUsersCol().where("phone", "==", phone).get()
+    static async getByPhone(phone: string) {
+        const res = await this.getCol().where("phone", "==", phone).get()
 
         if (res.docs && res.docs.length) {
             if (res.docs.length === 1) {
@@ -45,9 +45,9 @@ export default class Users {
      * @param {object} data
      * @returns {firebase.Promise<any>|!firebase.Promise.<void>}
      */
-    static async updateUser(id: string, data: any) {
+    static async update(id: string, data: any) {
         try {
-            await this.getUsersCol().doc(id).update(data);
+            await this.getCol().doc(id).update(data);
         } catch (err) {
             console.log(err)
         }
@@ -62,7 +62,7 @@ export default class Users {
      * @param inSystem user inSystem
      * @returns {firebase.Promise<any>|!firebase.Promise.<void>}
      */
-    static addUser({ phone, name, smsInvite, inSystem }: any) {
+    static add({ phone, name, smsInvite, inSystem }: any) {
         const user = {
             phone: phone || '',
             name: name || '',
@@ -70,14 +70,14 @@ export default class Users {
             inSystem: inSystem || true,
         }
 
-        return this.getUsersCol().add(user);
+        return this.getCol().add(user);
     }
 
     /**
      * Get users collection
      */
-    static getUsersCol() {
-        return Firestore.getFirestore().collection("users");
+    static getCol() {
+        return Firestore.get().collection("users");
     }
 }
 

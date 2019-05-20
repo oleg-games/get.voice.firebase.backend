@@ -1,18 +1,19 @@
 import Firestore from './firestoreService';
 import Auth from './authService';
+import { WebError } from '../errors';
 
 /**
- * @class Users
+ * @class Codes
  */
 export default class Codes {
 
     /**
-     * Get user by id
+     * Get code by id
      * @param {string} id
      * @returns {firebase.Promise<any>|!firebase.Promise.<void>}
      */
-    static async getCode(id: string) {
-        const doc = await this.getCodesCol().doc(id).get();
+    static async get(id: string) {
+        const doc = await this.getCol().doc(id).get();
         if (!doc || !doc.exists) {
             throw new Error(`Cannot find user with id ${id}`)
         }
@@ -25,8 +26,8 @@ export default class Codes {
      * @param {string} phone
      * @returns {firebase.Promise<any>|!firebase.Promise.<void>}
      */
-    static async getCodeByPhoneByCodeNotSighIn(phone: string, code: string) {
-        return await this.getCodesCol()
+    static async getByPhoneByCodeNotSighIn(phone: string, code: string) {
+        return await this.getCol()
             .where("phone", "==", phone)
             .where("code", "==", code)
             .where("isSignIn", "==", false)
@@ -38,9 +39,9 @@ export default class Codes {
      * @param {string} token
      * @returns {firebase.Promise<any>|!firebase.Promise.<void>}
      */
-    static async getCodeByTokenSighIn(token: string) {
-        console.log('getCodeByTokenSighIn token', token)
-        return await this.getCodesCol()
+    static async getByTokenSighIn(token: string) {
+        console.log('getByTokenSighIn token', token)
+        return await this.getCol()
             .where("token", "==", token)
             .where("isSignIn", "==", true)
             .get()
@@ -53,7 +54,7 @@ export default class Codes {
             throw new Error('Wrong credentials')
         }
 
-        const result = await Codes.getCodeByTokenSighIn(token.substring('Bearer '.length));
+        const result = await Codes.getByTokenSighIn(token.substring('Bearer '.length));
         console.log('number of codes', result.docs.length)
         if (result.docs.length) {
             console.log('user', result.docs[0].data());
@@ -76,7 +77,7 @@ export default class Codes {
             throw new Error('Wrong credentials')
         }
 
-        const decodedToken = await Auth.getAuth().verifyIdToken(token.substring('Bearer '.length));
+        const decodedToken = await Auth.get().verifyIdToken(token.substring('Bearer '.length));
         return decodedToken && decodedToken.phone_number && decodedToken.phone_number.substring(1);
     }
 
@@ -89,9 +90,10 @@ export default class Codes {
      */
     static async update(id: string, data: any) {
         try {
-            await this.getCodesCol().doc(id).update(data);
+            await this.getCol().doc(id).update(data);
         } catch (err) {
             console.log(err)
+            throw new WebError(`Error when update code ${err}`, 500);
         }
     }
 
@@ -112,14 +114,14 @@ export default class Codes {
             token: token || '',
         }
 
-        return this.getCodesCol().add(newCode);
+        return this.getCol().add(newCode);
     }
 
     /**
      * Get codes collection
      */
-    static getCodesCol() {
-        return Firestore.getFirestore().collection("codes");
+    static getCol() {
+        return Firestore.get().collection("codes");
     }
 }
 

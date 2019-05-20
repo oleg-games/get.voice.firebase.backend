@@ -31,7 +31,7 @@ export default class Middleware {
             throw new Error('Wrong credentials')
         }
 
-        await Auth.getAuth().verifyIdToken(token.substring('Bearer '.length));
+        await Auth.get().verifyIdToken(token.substring('Bearer '.length));
     };
 
     //Add login logout
@@ -46,7 +46,7 @@ export default class Middleware {
 
         try {
             console.log('token2', token.substring('Bearer '.length))
-            const code = await Codes.getCodeByTokenSighIn(token.substring('Bearer '.length));
+            const code = await Codes.getByTokenSighIn(token.substring('Bearer '.length));
             console.log('code', code)
             console.log(code.docs)
             console.log(code.docs.length)
