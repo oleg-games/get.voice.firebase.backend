@@ -1,16 +1,17 @@
 const express = require('express')
 import { Users } from '../../services';
 import { WebError } from '../../errors';
-import { authenticate } from './middleware';
+import { authenticate } from '../../middleware';
 
-const router = express.Router()
+const router = express.Router();
 
 router.get('/:phone', authenticate(), async (req: any, res: any) => {
+    console.log('/:phone')
     try {
         const { phone } = req.params;
 
         if (!phone) {
-            throw new WebError('Please fill phone', 500);
+            throw new WebError('Please fill phone');
         }
 
         const user = await Users.getByPhone(phone);
@@ -21,7 +22,7 @@ router.get('/:phone', authenticate(), async (req: any, res: any) => {
             res.send({});
         }
     } catch (e) {
-        throw new WebError('Problem when get question. Please contact us', 500);
+        throw new WebError('Problem when get question. Please contact us');
     }
 })
 

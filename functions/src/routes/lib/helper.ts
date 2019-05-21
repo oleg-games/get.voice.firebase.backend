@@ -1,16 +1,17 @@
 const express = require('express')
 import { FirestoreHelper } from '../../services';
 import { WebError } from '../../errors';
-import { authenticate } from './middleware';
+import { authenticate } from '../../middleware';
 
 const router = express.Router()
 
 router.post('/fill', authenticate(), async (req: any, res: any) => {
+    console.log('/fill')
     try {
         const { phone } = req.body.code;
 
         if (!phone) {
-            throw new WebError('Have not phone at request', 500);
+            throw new WebError('Have not phone at request');
         }
 
         console.log('phone', phone);
@@ -20,11 +21,11 @@ router.post('/fill', authenticate(), async (req: any, res: any) => {
             res.send(`Filled data`);
         } catch (err) {
             console.log(err);
-            throw new WebError(`Error: ${err}`, 500);
+            throw new WebError(`Error: ${err}`);
         }
     } catch (e) {
         console.log(e);
-        throw new WebError('Problem when add question. Please contact us', 500);
+        throw new WebError('Problem when add question. Please contact us');
     }
 })
 

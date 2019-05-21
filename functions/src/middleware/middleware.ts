@@ -1,62 +1,59 @@
-import { Codes, Auth } from '../services';
+// const _ = require('lodash')
+// const { securityService } = requireRoot('lib/services')
+import { WebError } from '../errors';
+import { Security } from '../services';
 
-export default class Middleware {
+/**
+	Initialises the standard view locals
+*/
+export const initLocals = function (req: any, res: any, next: any) {
+	next()
+}
 
-    /**
-     * Get phone by token from request
-     *
-     * @param {any} req request
-     */
-    static async getPhoneByTokenFromRequestFirebase(req: any) {
-        const token = req.headers.authorization;
-        return await Codes.getPhoneByTokenFirebase(token);
-    }
+/**
+	Prevents people from accessing protected pages when they're not signed in
+ */
+export const requireUser = function (req: any, res: any, next: any) {
+	if (!req.user) {
+		req.flash('error', 'Please sign in to access this page.')
+		res.redirect('/keystone/signin')
+	} else {
+		next()
+	}
+}
 
-    /**
-     * Get phone by token from request
-     *
-     * @param {any} req request
-     */
-    static async getPhoneByTokenFromRequest(req: any) {
-        const token = req.headers.authorization;
-        return await Codes.getPhoneByToken(token);
-    }
+export const authenticate = () => {
+	return async (req: any, res: any, next: any) => {
+		try {
+			const token = req.headers.authorization;
+			console.log('token', token)
+			await Security.auth(token);
+			console.log('okay')
+			next();
+		} catch (err) {
+			console.log('error')
+			req.token = null
+			next(err);
+		}
+		// next(e);
+		// 	securityService
+		// 		.hasAuthority({ token: req.headers.authorization, scopes: (scopes && scopes.kjs) })
+		// 		.then(result => next())
+		// 		.catch(e => {
+		// 			console.log(e)
+		// 			req.token = null
+		// 			next(e)
+		// 		})
+	}
+}
 
-    //Add login logout
-    static async middlewareInFirebase(req: any, res: any) {
-        console.log('headers', req.headers);
-        const token = req.headers.authorization;
-        console.log('token', token)
-        if (!token || token.indexOf('Bearer ') !== 0) {
-            throw new Error('Wrong credentials')
-        }
-
-        await Auth.get().verifyIdToken(token.substring('Bearer '.length));
-    };
-
-    //Add login logout
-    static async middleware(req: any, res: any) {
-        console.log('headers', req.headers);
-        const token = req.headers.authorization;
-        // const token = req.headers.token;
-        console.log('token', token)
-        if (!token || token.indexOf('Bearer ') !== 0) {
-            throw new Error('Wrong credentials')
-        }
-
-        try {
-            console.log('token2', token.substring('Bearer '.length))
-            const code = await Codes.getByTokenSighIn(token.substring('Bearer '.length));
-            console.log('code', code)
-            console.log(code.docs)
-            console.log(code.docs.length)
-            if (code.docs.length) {
-                return true;
-            } else {
-                throw new Error('Wrong credentials');
-            }
-        } catch (err) {
-            throw new Error('Wrong credentials');
-        }
-    }
+// Forced to have 4 arguments due to express convension about error handlers
+// eslint-disable-next-line
+export const errorHandler = function (err: any, req: any, res: any, next: any) {
+	// eslint-disable-next-line
+	console.log('error from handler', err)
+	const status = (err instanceof WebError)
+		? err.status
+		: 500
+	res.status(status).send({ error: err })
 }

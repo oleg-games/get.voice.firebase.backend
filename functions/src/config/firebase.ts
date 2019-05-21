@@ -1,10 +1,13 @@
 
 // import * as firebase from "firebase";
 // import 'firebase/firestore';
-// import 'firebase/auth'
 import * as admin from 'firebase-admin';
-// admin.initializeApp();
+// // @ts-ignore
+// require('firebase/auth');
 
+/**
+ * @class Firebase
+ */
 export default class Firebase {
 
   /**
@@ -12,15 +15,21 @@ export default class Firebase {
    */
   static initialize() {
     admin.initializeApp();
-    // firebase.initializeApp({
-    //   apiKey: "AIzaSyAcpsU9qetEPm-8KGTS5sATbZ7fcaOESFM",
-    //   authDomain: "get-voice-4d167.firebaseapp.com",
-    //   databaseURL: "https://get-voice-4d167.firebaseio.com",
-    //   projectId: "get-voice-4d167",
-    //   storageBucket: "get-voice-4d167.appspot.com",
-    //   messagingSenderId: "479996889138"
-    // });
   }
+
+  // /**
+  //  * Initialises Firebase
+  //  */
+  // static initializeNotAdmin() {
+  //   firebase.initializeApp({
+  //     apiKey: "AIzaSyAcpsU9qetEPm-8KGTS5sATbZ7fcaOESFM",
+  //     authDomain: "get-voice-4d167.firebaseapp.com",
+  //     databaseURL: "https://get-voice-4d167.firebaseio.com",
+  //     projectId: "get-voice-4d167",
+  //     storageBucket: "get-voice-4d167.appspot.com",
+  //     messagingSenderId: "479996889138"
+  //   });
+  // }
 
   /**
    * Get firebase
@@ -69,5 +78,4 @@ export default class Firebase {
   static get firebaseAppsLength() {
     return admin.apps.length;
   }
-
 }

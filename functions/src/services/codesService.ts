@@ -93,7 +93,7 @@ export default class Codes {
             await this.getCol().doc(id).update(data);
         } catch (err) {
             console.log(err)
-            throw new WebError(`Error when update code ${err}`, 500);
+            throw new WebError(`Error when update code ${err}`);
         }
     }
 
