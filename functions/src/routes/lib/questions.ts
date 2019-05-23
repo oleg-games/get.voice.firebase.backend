@@ -1,11 +1,11 @@
 const express = require('express')
-import { Questions, Answers } from '../../services';
+import { Questions, Answers, Security } from '../../services';
 import { WebError } from '../../errors';
 import { authenticate } from '../../middleware';
 
 const router = express.Router()
 
-router.get('/:id', authenticate(), async (req: any, res: any) => {
+router.get('/:id', authenticate(), async (req: any, res: any, next: any) => {
     console.log('/:id')
     try {
         const { id } = req.params;
@@ -22,35 +22,42 @@ router.get('/:id', authenticate(), async (req: any, res: any) => {
             res.send({});
         }
     } catch (e) {
-        throw new WebError('Problem when get question. Please contact us');
+        next(e)
     }
 })
 
-router.get('/:phone/all', authenticate(), async (req: any, res: any) => {
-    console.log('/:phone/all')
-    const { phone } = req.params;
-
-    if (!phone) {
-        throw new WebError('Please fill phone');
-    }
-
+router.get('/all/my', authenticate(), async (req: any, res: any, next: any) => {
+    console.log('/all/my')
     try {
+        const phone: any = await Security.getPhoneByTokenFromRequest(req);
+        console.log('phone', phone)
         const questionsSnapshot = await Questions.getByPhone(phone);
         res.send(questionsSnapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
     } catch (e) {
-        throw new WebError(`Problem when get questions by phone. Phone ${phone}`);
+        next(e);
     }
 })
 
-router.post('/', authenticate(), async (req: any, res: any) => {
+router.post('/', authenticate(), async (req: any, res: any, next: any) => {
     try {
         console.log('/')
-        const { phone, text, url, contacts }: any = req.body;
-        const questionRef = await Questions.add(phone, text, url);
+        console.log('req.body', req.body)
+        const { text, contacts, images }: any = req.body;
+        const phone: any = await Security.getPhoneByTokenFromRequest(req);
+        console.log('phone', phone)
+        console.log('text', text)
+        console.log('contacts', contacts)
+        console.log('images', images)
+
+        if (!text) {
+            throw new WebError("Please fill question text");
+        }
+
+        const questionRef = await Questions.add(phone, text, images);
         const answers = await Answers.addForContacts(contacts, questionRef)
         res.status(200).send({ id: questionRef.id, answers });
     } catch (e) {
-        throw new WebError('Problem when add question. Please contact us');
+        next(e);
     }
 })
 

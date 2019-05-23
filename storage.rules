@@ -1,7 +1,13 @@
 service firebase.storage {
   match /b/{bucket}/o {
     match /{allPaths=**} {
-      allow read, write: if request.auth!=null;
+      allow read, write;
     }
   }
+  //match /b/image-view-b1cf5.appspot.com/o {
+  //  match /{allPaths=**} {
+  //    // Allow access by all users
+  //    allow read, write;
+  //  }
+  //}
 }

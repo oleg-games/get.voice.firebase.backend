@@ -47,6 +47,21 @@ export default class Codes {
             .get()
     }
 
+    /**
+     * Delete code by token
+     * @param {string} token
+     * @returns {firebase.Promise<any>|!firebase.Promise.<void>}
+     */
+    static async deleteByToken(token: string) {
+        const codes = await this.getCol()
+            .where("token", "==", token)
+            .get()
+        for (const code of codes.docs) {
+            await this.getCol().doc(code.id).delete()
+        }
+
+        return true;
+    }
 
     static async getPhoneByToken(token: string) {
         console.log('token', token)
@@ -56,14 +71,22 @@ export default class Codes {
 
         const result = await Codes.getByTokenSighIn(token.substring('Bearer '.length));
         console.log('number of codes', result.docs.length)
-        if (result.docs.length) {
-            console.log('user', result.docs[0].data());
-            const code = { ...result.docs[0].data(), id: result.docs[0].id } as any;
-            console.log('code', code);
-            return code.phone;
+        if (!result.docs.length) {
+            throw new WebError('Cannot find phone');
         }
 
-        return false;
+        if (result.docs.length > 1) {
+            throw new WebError('A lot of phones for this token');
+        }
+
+        console.log('user', result.docs[0].data());
+        const code = { ...result.docs[0].data(), id: result.docs[0].id } as any;
+        console.log('code', code);
+        if (!code.phone) {
+            throw new WebError('Empty phone');
+        }
+
+        return code.phone;
     }
 
     /**

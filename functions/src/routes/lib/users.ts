@@ -1,19 +1,14 @@
 const express = require('express')
-import { Users } from '../../services';
+import { Users, Security } from '../../services';
 import { WebError } from '../../errors';
 import { authenticate } from '../../middleware';
 
 const router = express.Router();
 
-router.get('/:phone', authenticate(), async (req: any, res: any) => {
-    console.log('/:phone')
+router.get('/', authenticate(), async (req: any, res: any) => {
+    console.log('/')
     try {
-        const { phone } = req.params;
-
-        if (!phone) {
-            throw new WebError('Please fill phone');
-        }
-
+        const phone: any = await Security.getPhoneByTokenFromRequest(req);
         const user = await Users.getByPhone(phone);
 
         if (user) {

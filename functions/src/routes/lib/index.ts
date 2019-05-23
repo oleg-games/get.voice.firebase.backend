@@ -3,3 +3,4 @@ export { default as AnswersRouter } from './answers';
 export { default as SecurityRouter } from './security';
 export { default as UsersRouter } from './users';
 export { default as HelperRouter } from './helper';
+export { default as StorageRouter } from './storage';

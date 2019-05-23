@@ -1,94 +1,101 @@
 const express = require('express')
-import { Answers, Questions } from '../../services';
+import { Answers, Questions, Security } from '../../services';
 import { WebError } from '../../errors';
 import { authenticate } from '../../middleware';
 
 const router = express.Router()
 
-router.put('/:answerId', authenticate(), async (req: any, res: any) => {
-    console.log('/:answerId')
+router.get('/:answerId', authenticate(), async (req: any, res: any, next: any) => {
+    console.log('get /:answerId')
     try {
         const { answerId }: any = req.params;
-        const { text, url, contacts, id }: any = req.body;
-        console.log('text', text)
-        console.log('url', url)
-        console.log('contacts', contacts)
-        console.log('id', id)
         console.log('answerId', answerId)
 
         if (!answerId) {
             throw new WebError('Please fill answer id');
         }
 
-        if (!id) {
-            throw new WebError('Please fill question id');
+        const answer = await Answers.get(answerId);
+        res.status(200).send({ ...answer });
+    } catch (e) {
+        next(e);
+    }
+})
+
+router.put('/:answerId', authenticate(), async (req: any, res: any, next: any) => {
+    console.log('/:answerId')
+    try {
+        const { answerId }: any = req.params;
+        const { text, contacts, images }: any = req.body;
+        const phone: any = await Security.getPhoneByTokenFromRequest(req);
+
+        console.log('phone', phone)
+        console.log('text', text)
+        console.log('images', images)
+        console.log('contacts', contacts)
+        console.log('answerId', answerId)
+
+        if (!answerId) {
+            throw new WebError('Please fill answer id');
         }
 
         if (!text) {
             throw new WebError('Please fill answer text');
         }
 
-        const data: any = { text: text };
+        const data: any = { text };
 
-        if (url) {
-            data.image = url;
+        if (images && images.length) {
+            data.images = images;
         }
 
         await Answers.update(answerId, data);
-        const questionRef = await Questions.getDoc(id);
-        const answers = await Answers.addForContacts(contacts, questionRef)
+
+        const answer = await Answers.get(answerId);
+        const questionId = answer && answer.questionRef && answer.questionRef.id;
+        if (!questionId) {
+            throw new WebError('Empty question id in answer');
+        }
+        const questionRef = await Questions.getDoc(questionId);
+        const answers = await Answers.addForContacts(contacts, questionRef);
         res.status(200).send({ id: answerId, answers });
     } catch (e) {
-        console.log(e);
-        throw new WebError('Problem when add question. Please contact us');
+        next(e);
     }
 })
 
-router.get('/:phone/all/empty/my', authenticate(), async (req: any, res: any) => {
-    console.log('/:phone/all/empty/my')
-    const { phone } = req.params;
-
-    if (!phone) {
-        throw new WebError('Please fill phone');
-    }
-
+router.get('/all/empty/my', authenticate(), async (req: any, res: any, next: any) => {
+    console.log('/all/empty/my')
     try {
+        const phone: any = await Security.getPhoneByTokenFromRequest(req);
         const items = await Answers.getEmptyTextByToPhone(phone);
         res.send(items);
     } catch (e) {
-        throw new WebError(`Problem when get answers by phone. Phone ${phone}`);
+        next(e);
     }
 })
 
-router.get('/:phone/all/notempty/my', authenticate(), async (req: any, res: any) => {
-    console.log('/:phone/all/notempty/my')
-    const { phone } = req.params;
-
-    if (!phone) {
-        throw new WebError('Please fill phone');
-    }
+router.get('/all/my', authenticate(), async (req: any, res: any, next: any) => {
+    console.log('/all/my')
 
     try {
+        const phone: any = await Security.getPhoneByTokenFromRequest(req);
         const item = await Answers.getNotEmptyTextByToPhone(phone);
         res.send(item);
     } catch (e) {
-        throw new WebError(`Problem when get questions by phone. Phone ${phone}`);
+        next(e);
     }
 })
 
-router.get('/:phone/all/notempty/forme', authenticate(), async (req: any, res: any) => {
-    console.log('/:phone/all/notempty/forme')
-    const { phone } = req.params;
-
-    if (!phone) {
-        throw new WebError('Please fill phone');
-    }
+router.get('/all/forme', authenticate(), async (req: any, res: any, next: any) => {
+    console.log('/all/forme')
 
     try {
+        const phone: any = await Security.getPhoneByTokenFromRequest(req);
         const items = await Answers.getNotEmptyTextByFromPhone(phone);
         res.send(items);
     } catch (e) {
-        throw new WebError(`Problem when get questions by phone. Phone ${phone}`);
+        next(e);
     }
 })
 

@@ -4,6 +4,7 @@ import { Codes, Users } from '../../services';
 import { WebError } from '../../errors';
 import * as crypto from 'crypto';
 // import * as twilio from 'twilio';
+import { authenticate } from '../../middleware';
 
 const router = express.Router()
 
@@ -24,6 +25,7 @@ function getToken() {
 router.post('/code', async (req: any, res: any, next: any) => {
     console.log('/code')
     try {
+        console.log('test', req.body)
         const { phone } = req.body;
 
         if (!phone) {
@@ -47,7 +49,6 @@ router.post('/code', async (req: any, res: any, next: any) => {
         await Codes.add({ phone, code, isSignIn: false, token: '' });
         res.send({ phone, code });
     } catch (e) {
-        console.log(e);
         next(e);
     }
 })
@@ -93,8 +94,8 @@ router.post('/verify', async (req: any, res: any, next: any) => {
                 res.header('token', token);
                 res.send({
                     user: await Users.get(userInDb.id),
-                    code: req.body.code,
-                    phone: req.body.phone
+                    code,
+                    phone
                 });
             } else {
                 throw new WebError('Incorrect code number!', 401);
@@ -102,6 +103,25 @@ router.post('/verify', async (req: any, res: any, next: any) => {
         } else {
             throw new WebError('Incorrect code number!', 401);
         }
+    } catch (e) {
+        next(e)
+    }
+})
+
+router.post('/signout', authenticate(), async (req: any, res: any, next: any) => {
+    console.log('/signout')
+    const token = req && req.headers && req.headers.authorization;
+    console.log('token', token);
+    try {
+        if (!token || token.indexOf('Bearer ') !== 0) {
+            throw new WebError('Please fill token');
+        }
+
+        const tokenWithoutBearer = token.substring('Bearer '.length)
+
+        console.log('tokenWithoutBearer', tokenWithoutBearer)
+        await Codes.deleteByToken(tokenWithoutBearer);
+        res.send('Ok');
     } catch (e) {
         next(e)
     }

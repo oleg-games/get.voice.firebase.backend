@@ -1,5 +1,5 @@
 const express = require('express')
-import { FirestoreHelper } from '../../services';
+import { FirestoreHelper, Security } from '../../services';
 import { WebError } from '../../errors';
 import { authenticate } from '../../middleware';
 
@@ -8,7 +8,7 @@ const router = express.Router()
 router.post('/fill', authenticate(), async (req: any, res: any) => {
     console.log('/fill')
     try {
-        const { phone } = req.body.code;
+        const phone: any = await Security.getPhoneByTokenFromRequest(req);
 
         if (!phone) {
             throw new WebError('Have not phone at request');

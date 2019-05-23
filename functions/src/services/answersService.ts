@@ -77,12 +77,15 @@ export default class Answers {
      * @param questionRef question reference for object -> .doc('questions/' + questionRefs.id)
      * @returns {firebase.Promise<any>|!firebase.Promise.<void>}
      */
-    static add({ toPhone, text, image, questionRef }: any) {
-        const answer = {
+    static add({ toPhone, text, images, questionRef }: any) {
+        const answer: any = {
             toPhone,
             text: text || '',
             questionRef,
-            image: image || '',
+        }
+
+        if (images && images.length) {
+            answer.images = images;
         }
 
         return this.getCol().add(answer);

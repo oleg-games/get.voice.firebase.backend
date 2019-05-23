@@ -20,11 +20,14 @@ export default class Questions {
      * @param image question image
      * @returns {firebase.Promise<any>|!firebase.Promise.<void>}
      */
-    static add(fromPhone: string, text: string, image: string) {
-        const question = {
+    static add(fromPhone: string, text: string, images: string[]) {
+        const question: any = {
             fromPhone,
-            text,
-            image: image || ''
+            text
+        }
+
+        if (images && images.length) {
+            question.images = images;
         }
 
         return this.getCol().add(question);

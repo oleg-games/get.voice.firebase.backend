@@ -55,5 +55,7 @@ export const errorHandler = function (err: any, req: any, res: any, next: any) {
 	const status = (err instanceof WebError)
 		? err.status
 		: 500
-	res.status(status).send({ error: err })
+	console.log(err)
+	console.log(err.message)
+	res.status(status).send({ error: { ...err, message: err.message } })
 }

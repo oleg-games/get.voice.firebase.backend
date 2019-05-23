@@ -16,13 +16,13 @@ export default class FirestoreHelper {
      */
     static async fillData(phone: string) {
         console.log('Fill Data --->>>>')
-        const questionsMy = questions(phone).my;
+        const questionsMy: any = questions(phone).my;
         console.log(questionsMy);
         for (const question of questionsMy) {
             await Questions.add(phone, question.text, question.image);
         }
 
-        const questionsForMe = questions(phone).forMe;
+        const questionsForMe: any = questions(phone).forMe;
         console.log(questionsForMe);
         for (const answer of questionsForMe) {
             const questionRefs = await Questions.add(answer.question.fromPhone, answer.question.text, answer.question.image);
@@ -35,7 +35,7 @@ export default class FirestoreHelper {
             await Answers.add(data);
         }
 
-        const answersMy = answers(phone).my;
+        const answersMy: any = answers(phone).my;
         console.log(answersMy);
         for (const answer of answersMy) {
             const questionRefs = await Questions.add(answer.question.fromPhone, answer.question.text, answer.question.image);
@@ -48,7 +48,7 @@ export default class FirestoreHelper {
             await Answers.add(data);
         }
 
-        const answersForMe = answers(phone).forMe;
+        const answersForMe: any = answers(phone).forMe;
         console.log(answersForMe);
         for (const answer of answersForMe) {
             const questionRefs = await Questions.add(answer.question.fromPhone, answer.question.text, answer.question.image);
