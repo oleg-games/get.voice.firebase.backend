@@ -19,18 +19,18 @@ export default class FirestoreHelper {
         const questionsMy: any = questions(phone).my;
         console.log(questionsMy);
         for (const question of questionsMy) {
-            await Questions.add(phone, question.text, question.image);
+            await Questions.add(phone, question.text, question.images);
         }
 
         const questionsForMe: any = questions(phone).forMe;
         console.log(questionsForMe);
         for (const answer of questionsForMe) {
-            const questionRefs = await Questions.add(answer.question.fromPhone, answer.question.text, answer.question.image);
+            const questionRefs = await Questions.add(answer.question.fromPhone, answer.question.text, answer.question.images);
             const data = {
                 toPhone: answer.toPhone,
                 questionRef: await Firestore.get().doc('questions/' + questionRefs.id),
                 text: '',
-                image: '',
+                images: [],
             };
             await Answers.add(data);
         }
@@ -38,12 +38,12 @@ export default class FirestoreHelper {
         const answersMy: any = answers(phone).my;
         console.log(answersMy);
         for (const answer of answersMy) {
-            const questionRefs = await Questions.add(answer.question.fromPhone, answer.question.text, answer.question.image);
+            const questionRefs = await Questions.add(answer.question.fromPhone, answer.question.text, answer.question.images);
             const data = {
                 toPhone: answer.toPhone,
                 questionRef: await Firestore.get().doc('questions/' + questionRefs.id),
                 text: answer.text,
-                image: answer.image,
+                images: answer.images,
             };
             await Answers.add(data);
         }
@@ -51,12 +51,12 @@ export default class FirestoreHelper {
         const answersForMe: any = answers(phone).forMe;
         console.log(answersForMe);
         for (const answer of answersForMe) {
-            const questionRefs = await Questions.add(answer.question.fromPhone, answer.question.text, answer.question.image);
+            const questionRefs = await Questions.add(answer.question.fromPhone, answer.question.text, answer.question.images);
             const data = {
                 toPhone: answer.toPhone,
                 questionRef: await Firestore.get().doc('questions/' + questionRefs.id),
                 text: answer.text,
-                image: answer.image,
+                images: answer.images,
             };
             await Answers.add(data);
         }
